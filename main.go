@@ -27,17 +27,27 @@ In this case, you’re using the io.WriteString function to write your response 
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	fmt.Printf("got / request\n", ctx.Value(keyServerAddr)) // this logs on to the server
-	fmt.Printf("this is the request object: %v\n", r)       // this logs on to the server
-	io.WriteString(w, "this is my website")                 // this writes the string to w
+	hasFirst := r.URL.Query().Has("first")
+	hasSecond := r.URL.Query().Has("second")
+
+	first := r.URL.Query().Get("first")
+	second := r.URL.Query().Get("second")
+
+	fmt.Printf("%s: got / request. first(%t)=%s, second(%t)=%s\n",
+		ctx.Value(keyServerAddr),
+		hasFirst, first,
+		hasSecond, second)
+	// fmt.Printf("got / request, server address: %v\n", ctx.Value(keyServerAddr)) // this logs on to the server
+	// fmt.Printf("this is the request object: %v\n", r)                           // this logs on to the server
+	io.WriteString(w, "this is my website") // this writes the string to w
 }
 
 func getHello(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
-	fmt.Printf("got /hello request\n", ctx.Value(keyServerAddr)) //same here as well
-	fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)  //same here as well
-	fmt.Printf("this is the response Writer: %d\n", w)           //same here as well
+	fmt.Printf("got /hello request, server address: %v\n", ctx.Value(keyServerAddr)) //same here as well
+	fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)                      //same here as well
+	fmt.Printf("this is the response Writer: %d\n", w)                               //same here as well
 }
 
 // What is the Default Server Multiplexer?
@@ -115,6 +125,26 @@ func main() {
 
 	mux.HandleFunc("/", getRoot)
 	mux.HandleFunc("/hello", getHello)
+
+	// context is a standard way in go to carry, "deadlines", "cancellations", "signals", and "request scopeed values" across API boundaries and between goroutines
+	// so it is like a container of information  that you can pass around through the functions
+
+	/*
+		There are 4 types of contexts :-
+
+		-->context.Background()
+				----> Base context — like the root.
+				----> Use when no cancelation or deadline is needed.
+
+		-->context.WithCancel()
+				----> Create a new context that can be canceled manually.
+
+		-->context.WithTimeout()
+				----> Cancel context automatically after a timeout.
+
+		-->context.WithValue()
+				----> Add data to the context (like user ID, server address, etc.)
+	*/
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
